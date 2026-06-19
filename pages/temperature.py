@@ -10,18 +10,36 @@ st.set_page_config(page_title="서울 120년 기후 변화 탐험기", page_icon
 @st.cache_data
 def load_data():
 
-    df = pd.read_csv(
-        "ta_20260619190504.csv",
-        encoding="utf-8"
-    )
+```
+try:
+    df = pd.read_csv("ta_20260619190504.csv", encoding="utf-8")
+except:
+    df = pd.read_csv("ta_20260619190504.csv", encoding="cp949")
 
-    st.write(df.head())
-    st.write(df.columns)
+df.columns = df.columns.str.strip()
 
-    return df
+# 날짜 컬럼 자동 찾기
+date_col = None
 
-st.write(df.head())
-st.write(df.columns.tolist())
+for col in df.columns:
+    if "일시" in col or "날짜" in col:
+        date_col = col
+        break
+
+if date_col is None:
+    date_col = df.columns[0]
+
+df[date_col] = pd.to_datetime(
+    df[date_col],
+    errors="coerce"
+)
+
+df = df.dropna(subset=[date_col])
+
+df["연도"] = df[date_col].dt.year
+df["월"] = df[date_col].dt.month
+
+return df
 
 df = load_data()
 
