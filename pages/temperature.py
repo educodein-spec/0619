@@ -9,20 +9,15 @@ st.set_page_config(page_title="서울 120년 기후 변화 탐험기", page_icon
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("ta_20260619190504.csv")
-    df.columns = ["날짜", "지점", "평균기온", "최저기온", "최고기온"]
 
-    df["날짜"] = pd.to_datetime(df["날짜"])
-    df["연도"] = df["날짜"].dt.year
-    df["월"] = df["날짜"].dt.month
+    df = pd.read_csv(
+        "ta_20260619190504.csv",
+        encoding="utf-8"
+    )
 
-    season_map = {
-        12:"겨울",1:"겨울",2:"겨울",
-        3:"봄",4:"봄",5:"봄",
-        6:"여름",7:"여름",8:"여름",
-        9:"가을",10:"가을",11:"가을"
-    }
-    df["계절"] = df["월"].map(season_map)
+    st.write(df.head())
+    st.write(df.columns)
+
     return df
 
 df = load_data()
