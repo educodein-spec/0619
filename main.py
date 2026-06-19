@@ -168,3 +168,21 @@ if st.button("✨ 추천 직업 보기"):
         )
 
     st.success("진로 탐색은 참고 자료이며, 자신의 관심사와 적성을 함께 고려해 보세요!")
+
+st.write("---")
+
+st.subheader("🌟 MBTI 인간관계 구조도")
+
+draw_relationship_graph(selected_mbti)
+
+st.info("""
+🔵 잘 맞는 유형
+
+🟢 함께 성장하는 유형
+
+🔷 편안한 친구 유형
+
+🩷 갈등 가능성이 있는 유형
+
+※ MBTI는 참고용이며 실제 관계는 개인의 성격과 환경에 따라 달라질 수 있습니다.
+""")
