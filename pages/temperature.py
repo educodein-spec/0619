@@ -3,451 +3,114 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-
 from sklearn.linear_model import LinearRegression
 
-# -----------------------------------
-
-# 페이지 설정
-
-# -----------------------------------
-
-st.set_page_config(
-page_title="서울 120년 기후 변화 탐험기",
-page_icon="🌡️",
-layout="wide"
-)
-
-# -----------------------------------
-
-# 데이터 로드
-
-# -----------------------------------
+st.set_page_config(page_title="서울 120년 기후 변화 탐험기", page_icon="🌡️", layout="wide")
 
 @st.cache_data
 def load_data():
+    df = pd.read_csv("ta_20260619190504.csv")
+    df.columns = ["날짜", "지점", "평균기온", "최저기온", "최고기온"]
 
-```
-df = pd.read_csv("ta_20260619190504.csv", encoding="utf-8")
+    df["날짜"] = pd.to_datetime(df["날짜"])
+    df["연도"] = df["날짜"].dt.year
+    df["월"] = df["날짜"].dt.month
 
-df.columns = [
-    "날짜",
-    "지점",
-    "평균기온",
-    "최저기온",
-    "최고기온"
-]
-
-df["날짜"] = pd.to_datetime(df["날짜"])
-
-df["연도"] = df["날짜"].dt.year
-df["월"] = df["날짜"].dt.month
-df["일"] = df["날짜"].dt.day
-
-def season(month):
-    if month in [3,4,5]:
-        return "봄"
-    elif month in [6,7,8]:
-        return "여름"
-    elif month in [9,10,11]:
-        return "가을"
-    return "겨울"
-
-df["계절"] = df["월"].apply(season)
-
-return df
-```
+    season_map = {
+        12:"겨울",1:"겨울",2:"겨울",
+        3:"봄",4:"봄",5:"봄",
+        6:"여름",7:"여름",8:"여름",
+        9:"가을",10:"가을",11:"가을"
+    }
+    df["계절"] = df["월"].map(season_map)
+    return df
 
 df = load_data()
 
-# -----------------------------------
-
-# Sidebar
-
-# -----------------------------------
-
-st.sidebar.title("⚙️ 설정")
+st.title("🌡️ 서울 120년 기후 변화 탐험기")
 
 min_year = int(df["연도"].min())
 max_year = int(df["연도"].max())
 
-year_range = st.sidebar.slider(
-"분석 기간",
-min_year,
-max_year,
-(min_year, max_year)
-)
-
-temp_type = st.sidebar.selectbox(
-"기온 선택",
-["평균기온", "최저기온", "최고기온"]
-)
-
-df = df[
-(df["연도"] >= year_range[0]) &
-(df["연도"] <= year_range[1])
-]
-
-# -----------------------------------
-
-# 타이틀
-
-# -----------------------------------
-
-st.title("🌡️ 서울 120년 기후 변화 탐험기")
-st.caption("1907 ~ 2026 서울 기온 데이터 분석")
-
-# -----------------------------------
-
-# KPI
-
-# -----------------------------------
-
-c1, c2, c3, c4 = st.columns(4)
-
-with c1:
-st.metric(
-"분석 기간",
-f"{year_range[0]}~{year_range[1]}"
-)
-
-with c2:
-st.metric(
-"평균 기온",
-f"{df['평균기온'].mean():.2f}℃"
-)
-
-with c3:
-st.metric(
-"역대 최고",
-f"{df['최고기온'].max():.1f}℃"
-)
-
-with c4:
-st.metric(
-"역대 최저",
-f"{df['최저기온'].min():.1f}℃"
-)
-
-# -----------------------------------
-
-# 연평균 기온
-
-# -----------------------------------
-
-st.header("📈 연평균 기온 추세")
-
-annual = (
-df.groupby("연도")[temp_type]
-.mean()
-.reset_index()
-)
-
-annual["10년 이동평균"] = (
-annual[temp_type]
-.rolling(10)
-.mean()
-)
-
-X = annual["연도"].values.reshape(-1,1)
-y = annual[temp_type].values
-
-model = LinearRegression()
-model.fit(X,y)
-
-annual["추세선"] = model.predict(X)
-
-fig = go.Figure()
-
-fig.add_trace(
-go.Scatter(
-x=annual["연도"],
-y=annual[temp_type],
-name="연평균"
-)
-)
-
-fig.add_trace(
-go.Scatter(
-x=annual["연도"],
-y=annual["10년 이동평균"],
-name="10년 이동평균"
-)
-)
-
-fig.add_trace(
-go.Scatter(
-x=annual["연도"],
-y=annual["추세선"],
-name="추세선"
-)
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# -----------------------------------
-
-# 온난화 분석
-
-# -----------------------------------
-
-st.header("🔥 서울은 얼마나 따뜻해졌을까?")
-
-first_year = annual.iloc[0]
-last_year = annual.iloc[-1]
-
-change = (
-last_year[temp_type]
-- first_year[temp_type]
-)
-
-c1, c2, c3 = st.columns(3)
-
-c1.metric(
-f"{int(first_year['연도'])}년",
-f"{first_year[temp_type]:.2f}℃"
-)
-
-c2.metric(
-f"{int(last_year['연도'])}년",
-f"{last_year[temp_type]:.2f}℃"
-)
-
-c3.metric(
-"변화량",
-f"{change:+.2f}℃"
-)
-
-# -----------------------------------
-
-# 출생연도 비교
-
-# -----------------------------------
-
-st.header("🎂 내가 태어난 해와 비교")
-
-birth_year = st.number_input(
-"출생연도",
-min_value=min_year,
-max_value=max_year,
-value=1990
-)
-
-if birth_year in annual["연도"].values:
-
-```
-birth_temp = annual[
-    annual["연도"] == birth_year
-][temp_type].iloc[0]
-
-recent_temp = annual.iloc[-1][temp_type]
-
-diff = recent_temp - birth_temp
-
-c1, c2, c3 = st.columns(3)
-
-c1.metric(
-    f"{birth_year}년",
-    f"{birth_temp:.2f}℃"
-)
-
-c2.metric(
-    f"{int(last_year['연도'])}년",
-    f"{recent_temp:.2f}℃"
-)
-
-c3.metric(
-    "변화",
-    f"{diff:+.2f}℃"
-)
-```
-
-# -----------------------------------
-
-# 더운 해 TOP20
-
-# -----------------------------------
-
-st.header("🥵 가장 더운 해 TOP20")
-
-hot_years = (
-annual
-.sort_values(temp_type, ascending=False)
-.head(20)
-)
-
-st.dataframe(
-hot_years[["연도", temp_type]],
-use_container_width=True
-)
-
-fig = px.bar(
-hot_years,
-x="연도",
-y=temp_type
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# -----------------------------------
-
-# 추운 해 TOP20
-
-# -----------------------------------
-
-st.header("🥶 가장 추운 해 TOP20")
-
-cold_years = (
-annual
-.sort_values(temp_type)
-.head(20)
-)
-
-st.dataframe(
-cold_years[["연도", temp_type]],
-use_container_width=True
-)
-
-# -----------------------------------
-
-# 폭염 분석
-
-# -----------------------------------
-
-st.header("☀️ 폭염 분석")
-
-heatwave = (
-df[df["최고기온"] >= 33]
-.groupby("연도")
-.size()
-.reset_index(name="폭염일수")
-)
-
-fig = px.line(
-heatwave,
-x="연도",
-y="폭염일수"
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# -----------------------------------
-
-# 한파 분석
-
-# -----------------------------------
-
-st.header("❄️ 한파 분석")
-
-coldwave = (
-df[df["최저기온"] <= -12]
-.groupby("연도")
-.size()
-.reset_index(name="한파일수")
-)
-
-fig = px.line(
-coldwave,
-x="연도",
-y="한파일수"
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# -----------------------------------
-
-# 월별 히트맵
-
-# -----------------------------------
-
-st.header("📅 월별 기온 히트맵")
-
-pivot = pd.pivot_table(
-df,
-values="평균기온",
-index="연도",
-columns="월",
-aggfunc="mean"
-)
-
-fig = px.imshow(
-pivot,
-aspect="auto"
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# -----------------------------------
-
-# 미래 예측
-
-# -----------------------------------
-
-st.header("🔮 미래 기온 예측")
-
-future_years = np.arange(
-annual["연도"].max()+1,
-annual["연도"].max()+21
-)
-
-future_pred = model.predict(
-future_years.reshape(-1,1)
-)
-
-future_df = pd.DataFrame({
-"연도":future_years,
-"예측기온":future_pred
-})
-
-fig = go.Figure()
-
-fig.add_trace(
-go.Scatter(
-x=annual["연도"],
-y=annual[temp_type],
-name="실제"
-)
-)
-
-fig.add_trace(
-go.Scatter(
-x=future_df["연도"],
-y=future_df["예측기온"],
-name="예측"
-)
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-st.dataframe(
-future_df,
-use_container_width=True
-)
-
-# -----------------------------------
-
-# AI 인사이트
-
-# -----------------------------------
-
-st.header("🤖 자동 인사이트")
-
-hottest_year = hot_years.iloc[0]["연도"]
-coldest_year = cold_years.iloc[0]["연도"]
-
-st.info(
-f"""
-• 분석 기간 동안 평균 변화량 : {change:+.2f}℃
-
-```
-• 가장 더운 해 : {int(hottest_year)}년
-
-• 가장 추운 해 : {int(coldest_year)}년
-
-• 서울은 장기적으로 뚜렷한 온난화 경향을 보이고 있습니다.
-
-• 최근 수십 년간 상승 속도가 더욱 가파르게 나타납니다.
-"""
-```
-
-)
+st.sidebar.header("설정")
+year_range = st.sidebar.slider("분석 기간", min_year, max_year, (min_year, max_year))
+
+df = df[(df["연도"] >= year_range[0]) & (df["연도"] <= year_range[1])]
+
+annual = df.groupby("연도")[["평균기온","최저기온","최고기온"]].mean().reset_index()
+
+first_temp = annual.iloc[0]["평균기온"]
+last_temp = annual.iloc[-1]["평균기온"]
+
+c1,c2,c3,c4,c5 = st.columns(5)
+c1.metric("분석기간", f"{year_range[0]}~{year_range[1]}")
+c2.metric("평균기온", f"{df['평균기온'].mean():.2f}℃")
+c3.metric("역대 최고", f"{df['최고기온'].max():.1f}℃")
+c4.metric("역대 최저", f"{df['최저기온'].min():.1f}℃")
+c5.metric("상승폭", f"{last_temp-first_temp:+.2f}℃")
+
+tabs = st.tabs([
+    "📈 추세","🔥 온난화","🎂 출생연도","🥵 더운 해",
+    "🥶 추운 해","☀️ 폭염","❄️ 한파","🌍 계절",
+    "📅 Heatmap","🔮 예측","🤖 리포트"
+])
+
+with tabs[0]:
+    annual["10년이동평균"] = annual["평균기온"].rolling(10).mean()
+    model = LinearRegression().fit(annual[["연도"]], annual["평균기온"])
+    annual["추세선"] = model.predict(annual[["연도"]])
+
+    fig = go.Figure()
+    fig.add_scatter(x=annual["연도"], y=annual["평균기온"], name="평균기온")
+    fig.add_scatter(x=annual["연도"], y=annual["10년이동평균"], name="10년 이동평균")
+    fig.add_scatter(x=annual["연도"], y=annual["추세선"], name="추세선")
+    st.plotly_chart(fig, use_container_width=True)
+
+with tabs[1]:
+    st.metric("1907→최근 상승폭", f"{last_temp-first_temp:+.2f}℃")
+
+with tabs[2]:
+    birth = st.number_input("출생연도", min_value=min_year, max_value=max_year, value=1990)
+    if birth in annual["연도"].values:
+        bt = annual.loc[annual["연도"]==birth,"평균기온"].iloc[0]
+        st.metric("현재와 차이", f"{last_temp-bt:+.2f}℃")
+
+with tabs[3]:
+    st.dataframe(annual.nlargest(20,"평균기온")[["연도","평균기온"]])
+
+with tabs[4]:
+    st.dataframe(annual.nsmallest(20,"평균기온")[["연도","평균기온"]])
+
+with tabs[5]:
+    heat = df[df["최고기온"]>=33].groupby("연도").size().reset_index(name="폭염일수")
+    st.plotly_chart(px.line(heat,x="연도",y="폭염일수"), use_container_width=True)
+
+with tabs[6]:
+    cold = df[df["최저기온"]<=-12].groupby("연도").size().reset_index(name="한파일수")
+    st.plotly_chart(px.line(cold,x="연도",y="한파일수"), use_container_width=True)
+
+with tabs[7]:
+    season = df.groupby(["연도","계절"])["평균기온"].mean().reset_index()
+    st.plotly_chart(px.line(season,x="연도",y="평균기온",color="계절"), use_container_width=True)
+
+with tabs[8]:
+    heatmap = pd.pivot_table(df,index="연도",columns="월",values="평균기온")
+    st.plotly_chart(px.imshow(heatmap,aspect="auto"), use_container_width=True)
+
+with tabs[9]:
+    model = LinearRegression().fit(annual[["연도"]], annual["평균기온"])
+    future_years = np.arange(max_year+1, max_year+21)
+    preds = model.predict(future_years.reshape(-1,1))
+    future = pd.DataFrame({"연도":future_years,"예측기온":preds})
+    st.dataframe(future)
+
+with tabs[10]:
+    hottest = annual.loc[annual["평균기온"].idxmax(),"연도"]
+    coldest = annual.loc[annual["평균기온"].idxmin(),"연도"]
+    st.markdown(f"""
+    ### 서울 기후 리포트
+    - 평균기온 상승폭: **{last_temp-first_temp:+.2f}℃**
+    - 가장 더운 해: **{int(hottest)}년**
+    - 가장 추운 해: **{int(coldest)}년**
+    - 서울은 장기적으로 온난화 추세를 보입니다.
+    """)
