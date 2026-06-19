@@ -173,5 +173,5 @@ st.write("---")
 
 st.subheader("🌟 MBTI 인간관계 구조도")
 
-draw_relationship_graph(selected_mbti)
+
 
