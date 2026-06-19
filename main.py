@@ -1,4 +1,7 @@
 import streamlit as st
+import networkx as nx
+import matplotlib.pyplot as plt
+
 
 # 페이지 설정
 st.set_page_config(
@@ -172,6 +175,105 @@ if st.button("✨ 추천 직업 보기"):
 st.write("---")
 
 st.subheader("🌟 MBTI 인간관계 구조도")
+
+mbti_relationships = {
+"INTJ": {
+"best": ["ENFP", "ENTP"],
+"friend": ["INFJ", "INTP"],
+"challenge": ["ESFP", "ISFP"]
+},
+"INTP": {
+"best": ["ENTJ", "ENFJ"],
+"friend": ["INTJ", "INFJ"],
+"challenge": ["ESFP", "ESTP"]
+},
+"ENTJ": {
+"best": ["INTP", "INFP"],
+"friend": ["ENTP", "INTJ"],
+"challenge": ["ISFP", "ESFP"]
+},
+"ENTP": {
+"best": ["INFJ", "INTJ"],
+"friend": ["ENFP", "ENTJ"],
+"challenge": ["ISFJ", "ISTJ"]
+},
+"INFJ": {
+"best": ["ENFP", "ENTP"],
+"friend": ["INTJ", "INFP"],
+"challenge": ["ESTP", "ESFP"]
+},
+"INFP": {
+"best": ["ENFJ", "ENTJ"],
+"friend": ["INFJ", "ENFP"],
+"challenge": ["ESTJ", "ISTJ"]
+},
+"ENFJ": {
+"best": ["INFP", "ISFP"],
+"friend": ["ENFP", "INFJ"],
+"challenge": ["ISTP", "INTP"]
+},
+"ENFP": {
+"best": ["INTJ", "INFJ"],
+"friend": ["ENTP", "ENFJ"],
+"challenge": ["ISTJ", "ESTJ"]
+}
+}
+def draw_relationship_graph(mbti):
+
+```
+if mbti not in mbti_relationships:
+    st.warning("인간관계 데이터 준비 중입니다.")
+    return
+
+relation = mbti_relationships[mbti]
+
+G = nx.Graph()
+
+G.add_node(mbti)
+
+colors = {mbti:"#CDB4DB"}
+
+for x in relation["best"]:
+    G.add_edge(mbti, x)
+    colors[x] = "#A2D2FF"
+
+for x in relation["friend"]:
+    G.add_edge(mbti, x)
+    colors[x] = "#BDE0FE"
+
+for x in relation["challenge"]:
+    G.add_edge(mbti, x)
+    colors[x] = "#FFC8DD"
+
+pos = nx.spring_layout(G, seed=42)
+
+fig, ax = plt.subplots(figsize=(7,5))
+
+nx.draw_networkx_nodes(
+    G,
+    pos,
+    node_size=2500,
+    node_color=[colors[n] for n in G.nodes()]
+)
+
+nx.draw_networkx_edges(
+    G,
+    pos,
+    width=2,
+    edge_color="#B8C0FF"
+)
+
+nx.draw_networkx_labels(
+    G,
+    pos,
+    font_size=10,
+    font_weight="bold"
+)
+
+plt.axis("off")
+
+st.pyplot(fig)
+```
 
 
 
