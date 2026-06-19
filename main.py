@@ -1,7 +1,4 @@
 import streamlit as st
-import networkx as nx
-import matplotlib.pyplot as plt
-
 
 # 페이지 설정
 st.set_page_config(
@@ -171,50 +168,3 @@ if st.button("✨ 추천 직업 보기"):
         )
 
     st.success("진로 탐색은 참고 자료이며, 자신의 관심사와 적성을 함께 고려해 보세요!")
-
-st.write("---")
-
-st.subheader("🌟 MBTI 인간관계 구조도")
-
-mbti_relationships = {
-"INTJ": {
-"best": ["ENFP", "ENTP"],
-"friend": ["INFJ", "INTP"],
-"challenge": ["ESFP", "ISFP"]
-},
-"INTP": {
-"best": ["ENTJ", "ENFJ"],
-"friend": ["INTJ", "INFJ"],
-"challenge": ["ESFP", "ESTP"]
-},
-"ENTJ": {
-"best": ["INTP", "INFP"],
-"friend": ["ENTP", "INTJ"],
-"challenge": ["ISFP", "ESFP"]
-},
-"ENTP": {
-"best": ["INFJ", "INTJ"],
-"friend": ["ENFP", "ENTJ"],
-"challenge": ["ISFJ", "ISTJ"]
-},
-"INFJ": {
-"best": ["ENFP", "ENTP"],
-"friend": ["INTJ", "INFP"],
-"challenge": ["ESTP", "ESFP"]
-},
-"INFP": {
-"best": ["ENFJ", "ENTJ"],
-"friend": ["INFJ", "ENFP"],
-"challenge": ["ESTJ", "ISTJ"]
-},
-"ENFJ": {
-"best": ["INFP", "ISFP"],
-"friend": ["ENFP", "INFJ"],
-"challenge": ["ISTP", "INTP"]
-},
-"ENFP": {
-"best": ["INTJ", "INFJ"],
-"friend": ["ENTP", "ENFJ"],
-"challenge": ["ISTJ", "ESTJ"]
-}
-}
