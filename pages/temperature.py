@@ -20,6 +20,9 @@ def load_data():
 
     return df
 
+st.write(df.head())
+st.write(df.columns.tolist())
+
 df = load_data()
 
 st.title("🌡️ 서울 120년 기후 변화 탐험기")
