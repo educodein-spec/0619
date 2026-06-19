@@ -220,7 +220,6 @@ mbti_relationships = {
 }
 def draw_relationship_graph(mbti):
 
-```
 if mbti not in mbti_relationships:
     st.warning("인간관계 데이터 준비 중입니다.")
     return
